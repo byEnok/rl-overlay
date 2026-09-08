@@ -17,11 +17,26 @@ def get_settings() -> dict:
   return response.json()
 
 
-def update_settings(user_name: str, launcher: str, user_id: str) -> None:
-  """Sends new settings to the backend."""
+def update_settings(
+  user_name: str, launcher: str, user_id: str, hotkey: str | None = None
+) -> None:
+  """Sends new settings to the backend. hotkey=None keeps the stored one."""
+  payload = {"user_name": user_name, "launcher": launcher, "user_id": user_id}
+  if hotkey is not None:
+    payload["hotkey"] = hotkey
   response = httpx.post(
     f"{BASE_URL}/settings",
-    json={"user_name": user_name, "launcher": launcher, "user_id": user_id},
+    json=payload,
+    timeout=TIMEOUT,
+  )
+  response.raise_for_status()
+
+
+def update_settings_hotkey(hotkey: str) -> None:
+  """Saves only the hotkey; backend keeps all other settings untouched."""
+  response = httpx.patch(
+    f"{BASE_URL}/settings/hotkey",
+    json={"hotkey": hotkey},
     timeout=TIMEOUT,
   )
   response.raise_for_status()

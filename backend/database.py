@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-DATABASE = "overlay.db" 
+DATABASE = "overlay.db"
 
 # CREATES THE DATABASE TABLES IF THEY DON'T EXIST
 def initialize_database():
@@ -32,9 +32,19 @@ def initialize_database():
             id INTEGER PRIMARY KEY CHECK (id = 1),
             user_name TEXT NOT NULL DEFAULT '',
             launcher TEXT NOT NULL DEFAULT 'Steam',
-            user_id TEXT NOT NULL DEFAULT ''
+            user_id TEXT NOT NULL DEFAULT '',
+            hotkey TEXT NOT NULL DEFAULT 'F8'
             )
-        """) 
+        """)
+
+# ADD HOTKEY COLUMN TO EXISTING DATABASES CREATED BEFORE IT EXISTED
+  existing_columns = connection.execute(
+    "PRAGMA table_info(settings)"
+  ).fetchall()
+  if "hotkey" not in [column[1] for column in existing_columns]:
+    connection.execute(
+      "ALTER TABLE settings ADD COLUMN hotkey TEXT NOT NULL DEFAULT 'F8'"
+    )
 
 # KEEP USER INFO AFTER APP SHUTDOWN
   connection.execute("""
@@ -53,11 +63,12 @@ def initialize_database():
 
 
 # GETS THE SAVED USER NAME AND USER ID
+# RETURNS (user_name, launcher, user_id, hotkey)
 def get_settings():
   connection = sqlite3.connect(DATABASE)
 
   settings = connection.execute(
-    "SELECT user_name, launcher, user_id FROM settings WHERE id = 1"
+    "SELECT user_name, launcher, user_id, hotkey FROM settings WHERE id = 1"
   ).fetchone()
 
   connection.close()
@@ -65,17 +76,30 @@ def get_settings():
   return settings
 
 
-# UPDATES THE SAVED USER NAME, LAUNCHER AND USER ID
-def update_settings(user_name, launcher, user_id):
+# UPDATES THE SAVED USER NAME, LAUNCHER, USER ID AND HOTKEY
+def update_settings(user_name, launcher, user_id, hotkey):
   connection = sqlite3.connect(DATABASE)
 
   connection.execute(
     """
     UPDATE settings
-    SET user_name = ?, launcher = ?, user_id = ?
+    SET user_name = ?, launcher = ?, user_id = ?, hotkey = ?
     WHERE id = 1
     """,
-    (user_name, launcher, user_id)
+    (user_name, launcher, user_id, hotkey)
+  )
+
+  connection.commit()
+  connection.close()
+
+
+# UPDATES ONLY THE SAVED HOTKEY (FRONTEND UI PREFERENCE)
+def update_settings_hotkey(hotkey):
+  connection = sqlite3.connect(DATABASE)
+
+  connection.execute(
+    "UPDATE settings SET hotkey = ? WHERE id = 1",
+    (hotkey,)
   )
 
   connection.commit()
@@ -103,7 +127,7 @@ def get_session_stats():
     "SELECT wins, losses, streak FROM session_stats WHERE id = 1"
   ).fetchone()
 
-  connection.close
+  connection.close()
 
   return stats
 
@@ -117,7 +141,7 @@ def update_session_stats(wins, losses, streak):
     UPDATE session_stats
     SET wins = ?, losses = ?, streak = ?
     WHERE id = 1
-    """, 
+    """,
     (wins, losses, streak)
   )
 
@@ -135,7 +159,7 @@ def record_match(result):
 
   elif result == "L":
     losses += 1
-    streak = 0 
+    streak = 0
 
   save_match(result)
   update_session_stats(wins, losses, streak)

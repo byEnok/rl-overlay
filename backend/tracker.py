@@ -9,16 +9,17 @@ my_team = None
 async def main():
     global my_team
 
-    user_name, launcher, user_id = get_settings()
+    user_name, launcher, user_id, _hotkey = get_settings()
 
     async with StatsClient() as client:
         async for message in client.events(
             "UpdateState",
             "MatchEnded"
         ):
+            # print(message.data)
             if message.event == "UpdateState":
 
-                # print("UpdateState received")
+
                 players = message.data["Players"]
 
                 for player in players:

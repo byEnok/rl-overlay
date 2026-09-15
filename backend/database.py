@@ -3,6 +3,9 @@ from datetime import datetime
 
 DATABASE = "overlay.db"
 
+# GAMEMODES WE TRACK (API PlaylistId)
+TRACKED_PLAYLISTS = {"1v1": 10, "2v2": 11, "3v3": 13}
+
 # CREATES THE DATABASE TABLES IF THEY DON'T EXIST
 def initialize_database():
   connection = sqlite3.connect(DATABASE)
@@ -16,10 +19,17 @@ def initialize_database():
             )
         """)
 
-# CREATE SESSION STATS TABLE
+# CREATE SESSION STATS TABLE - ONE ROW PER GAMEMODE
+# (old schema had a single row with id=1; dev-era data is dropped)
+  old_columns = connection.execute(
+    "PRAGMA table_info(session_stats)"
+  ).fetchall()
+  if "id" in [column[1] for column in old_columns]:
+    connection.execute("DROP TABLE session_stats")
+
   connection.execute("""
         CREATE TABLE IF NOT EXISTS session_stats (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
+            playlist TEXT PRIMARY KEY,
             wins INTEGER NOT NULL DEFAULT 0,
             losses INTEGER NOT NULL DEFAULT 0,
             streak INTEGER NOT NULL DEFAULT 0
@@ -52,11 +62,12 @@ def initialize_database():
         VALUES (1)
   """)
 
-# KEEPS SESSTION STATS AFTER APP SHUTDOWN
-  connection.execute("""
-        INSERT OR IGNORE INTO session_stats (id)
-        VALUES (1)
-  """)
+# KEEP SESSION STATS AFTER APP SHUTDOWN (ONE SEED ROW PER GAMEMODE)
+  for playlist in TRACKED_PLAYLISTS:
+    connection.execute(
+      "INSERT OR IGNORE INTO session_stats (playlist) VALUES (?)",
+      (playlist,)
+    )
 
   connection.commit()
   connection.close()
@@ -120,11 +131,12 @@ def save_match(result):
   connection.close()
 
 
-# GETS THE CURRENT SESSION W/L AND WIN STREAK
-def get_session_stats():
+# GETS THE CURRENT SESSION W/L AND WIN STREAK FOR ONE GAMEMODE
+def get_session_stats(playlist):
   connection = sqlite3.connect(DATABASE)
   stats = connection.execute(
-    "SELECT wins, losses, streak FROM session_stats WHERE id = 1"
+    "SELECT wins, losses, streak FROM session_stats WHERE playlist = ?",
+    (playlist,)
   ).fetchone()
 
   connection.close()
@@ -132,26 +144,26 @@ def get_session_stats():
   return stats
 
 
-# UPDATES THE CURRENT SESSION W/L AND WIN STREAK
-def update_session_stats(wins, losses, streak):
+# UPDATES THE CURRENT SESSION W/L AND WIN STREAK FOR ONE GAMEMODE
+def update_session_stats(playlist, wins, losses, streak):
   connection = sqlite3.connect(DATABASE)
 
   connection.execute(
     """
     UPDATE session_stats
     SET wins = ?, losses = ?, streak = ?
-    WHERE id = 1
+    WHERE playlist = ?
     """,
-    (wins, losses, streak)
+    (wins, losses, streak, playlist)
   )
 
   connection.commit()
   connection.close()
 
 
-# RECORDS A MATCH AND UPDATES THE CURRENT SESSION
-def record_match(result):
-  wins, losses, streak = get_session_stats()
+# RECORDS A MATCH AND UPDATES THE CURRENT SESSION FOR ONE GAMEMODE
+def record_match(playlist, result):
+  wins, losses, streak = get_session_stats(playlist)
 
   if result == "W":
     wins += 1
@@ -162,19 +174,20 @@ def record_match(result):
     streak = 0
 
   save_match(result)
-  update_session_stats(wins, losses, streak)
+  update_session_stats(playlist, wins, losses, streak)
 
 
-# RESETS THE CURRENT SESSION WITHOUT DELETING MATCH HISTORY
-def reset_session():
+# RESETS ONE GAMEMODE'S SESSION WITHOUT DELETING MATCH HISTORY
+def reset_session(playlist):
   connection = sqlite3.connect(DATABASE)
 
   connection.execute(
     """
     UPDATE session_stats
     SET wins = 0, losses = 0, streak = 0
-    WHERE id = 1
-    """
+    WHERE playlist = ?
+    """,
+    (playlist,)
   )
 
   connection.commit()

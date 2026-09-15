@@ -33,6 +33,8 @@ DEFAULT_HOTKEY = "F8"
 
 STATS_POLL_MS = 2000  # poll backend stats every 2 s
 
+GAMEMODES = ["1v1", "2v2", "3v3"]
+
 # Hover backgrounds for small header buttons (mild, transparent tints).
 HOVER_WHITE = "rgba(255, 255, 255, 40)"
 HOVER_RED = "rgba(240, 45, 45, 60)"
@@ -50,6 +52,23 @@ def style_header_button(button: QPushButton, hover_color: str):
     }}
     QPushButton:hover {{ background: {hover_color}; }}
     QPushButton:pressed {{ background: rgba(255, 255, 255, 80); }}
+    """
+  )
+
+
+def style_mode_button(button: QPushButton):
+  """Flat gamemode tab: hover tint, blue text while it is the active tab."""
+  button.setStyleSheet(
+    f"""
+    QPushButton {{
+      border: 0.5px solid gray;
+      background: transparent;
+      border-radius: 4px;
+      color: palette(text);
+    }}
+    QPushButton:hover {{ background: {HOVER_WHITE}; }}
+    QPushButton:pressed {{ background: rgba(255, 255, 255, 80); }}
+    QPushButton:checked {{ color: {ACCENT_COLOR}; font-weight: bold; }}
     """
   )
 
@@ -129,15 +148,26 @@ class SessionWindow(FramelessWindow):
     layout.setSpacing(6)
 
     header = QHBoxLayout()
-    # title = QLabel("Session")
-    # title.setStyleSheet(f"color: {ACCENT_COLOR}; font-weight: bold;")
-    # header.addWidget(title)
     header.addStretch(5)
 
-    # RESET SESSION BUTTON 
+    # GAMEMODE TABS (one tab per tracked gamemode, left of the reset button)
+    self.mode_buttons = {}
+    for mode in GAMEMODES:
+      mode_button = QPushButton(mode)
+      mode_button.setCheckable(True)
+      mode_button.setFixedSize(34, 20)
+      style_mode_button(mode_button)
+      mode_button.setToolTip(f"Show {mode} session stats")
+      mode_button.clicked.connect(
+        lambda _checked, m=mode: self.select_mode(m)
+      )
+      header.addWidget(mode_button)
+      self.mode_buttons[mode] = mode_button
+
+    # RESET SESSION BUTTON (resets the selected gamemode's session)
     reset_button = QPushButton("Reset")
     reset_button.setFixedSize(42, 20)
-    reset_button.setToolTip("Reset session")
+    reset_button.setToolTip("Reset selected gamemode's session")
     reset_button.clicked.connect(self.reset_session)
     header.addWidget(reset_button)
 
@@ -156,12 +186,12 @@ class SessionWindow(FramelessWindow):
     header.addWidget(quit_button)
     layout.addLayout(header)
 
+    self.current_mode = "2v2"
+    self._highlight_mode_button()
+
     self.wins_label = self._stat_label("Wins: 0", WIN_COLOR)
     self.losses_label = self._stat_label("Losses: 0", LOSS_COLOR)
     self.streak_label = self._stat_label("Streak: -", STREAK_COLOR)
-    # layout.addWidget(self.wins_label)
-    # layout.addWidget(self.losses_label)
-    # layout.addWidget(self.streak_label)
     stats_row = QHBoxLayout()
     stats_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -195,11 +225,22 @@ class SessionWindow(FramelessWindow):
     label.setStyleSheet(f"color: {color}; font-size: 15px;")
     return label
 
+  def _highlight_mode_button(self):
+    for mode, button in self.mode_buttons.items():
+      button.setChecked(mode == self.current_mode)
+
+  def select_mode(self, mode: str):
+    if mode == self.current_mode:
+      return
+    self.current_mode = mode
+    self._highlight_mode_button()
+    self.refresh_stats()
+
   # ---------- Backend data ----------
 
   def reset_session(self):
       try:
-          api.reset_session()
+          api.reset_session(self.current_mode)
           self.refresh_stats()
       except Exception:
           self.connection_error_label.show()
@@ -207,7 +248,7 @@ class SessionWindow(FramelessWindow):
 
   def refresh_stats(self):
     try:
-      stats = api.get_stats()
+      stats = api.get_stats()[self.current_mode]
       self.wins_label.setText(f"Wins: {stats['wins']}")
       self.losses_label.setText(f"Losses: {stats['losses']}")
       self.streak_label.setText(f"Streak: {format_streak(stats['streak'])}")

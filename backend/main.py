@@ -6,7 +6,10 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from backend.tracker import main as tracker_main
-from backend.database import initialize_database, get_settings, update_settings, update_settings_hotkey, get_session_stats, reset_session
+from backend.database import (
+  initialize_database, get_settings, update_settings, update_settings_hotkey,
+  get_session_stats, reset_session, TRACKED_PLAYLISTS
+)
 
 def _on_tracker_done(task: asyncio.Task):
   """Warn loudly if the tracker task dies unexpectedly.
@@ -96,23 +99,26 @@ def update_hotkey(payload: HotkeyUpdate):
     "message": "Hotkey updated!"
   }
 
-# GETS THE CURRENT SESSION STATS
+# GETS THE CURRENT SESSION STATS (PER GAMEMODE)
 @app.get("/stats")
 def stats():
-  wins, losses, streak = get_session_stats()
-
   return {
-    "wins": wins,
-    "losses": losses,
-    "streak": streak
+    mode: {
+      "wins": wins,
+      "losses": losses,
+      "streak": streak
+    }
+    for mode, (wins, losses, streak) in (
+      (mode, get_session_stats(mode)) for mode in TRACKED_PLAYLISTS
+    )
   }
 
-# RESETS THE CURRENT SESSION STATS
+# RESETS ONE GAMEMODE'S SESSION STATS
 @app.post("/session/reset")
-def session_reset():
-  reset_session()
+def session_reset(mode: str):
+  reset_session(mode)
 
   return {
-    "message": "Session reset!"
+    "message": f"{mode} session reset!"
   }
 

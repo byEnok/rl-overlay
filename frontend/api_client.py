@@ -43,13 +43,18 @@ def update_settings_hotkey(hotkey: str) -> None:
 
 
 def get_stats() -> dict:
-  """Returns {'wins': int, 'losses': int, 'streak': int} or raises."""
+  """Returns {'1v1': {'wins': int, 'losses': int, 'streak': int},
+  '2v2': {...}, '3v3': {...}} or raises."""
   response = httpx.get(f"{BASE_URL}/stats", timeout=TIMEOUT)
   response.raise_for_status()
   return response.json()
 
 
-def reset_session() -> None:
-  """Resets the current session W/L and streak (history is kept)."""
-  response = httpx.post(f"{BASE_URL}/session/reset", timeout=TIMEOUT)
+def reset_session(mode: str) -> None:
+  """Resets one gamemode's session W/L and streak (history is kept)."""
+  response = httpx.post(
+    f"{BASE_URL}/session/reset",
+    params={"mode": mode},
+    timeout=TIMEOUT,
+  )
   response.raise_for_status()

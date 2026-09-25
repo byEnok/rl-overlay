@@ -15,9 +15,22 @@ def initialize_database():
         CREATE TABLE IF NOT EXISTS matches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             result TEXT NOT NULL,
-            played_at TEXT NOT NULL
+            played_at TEXT NOT NULL,
+            player_score INTEGER,
+            opponent_score INTEGER
             )
         """)
+
+# ADD SCORE COLUMNS TO DATABASES CREATED BEFORE THEY EXISTED (NULLABLE -
+# OLD ROWS SIMPLY HAVE NO SCORE, WHICH THE UI HANDLES)
+  match_columns = connection.execute(
+    "PRAGMA table_info(matches)"
+  ).fetchall()
+  match_column_names = [column[1] for column in match_columns]
+  if "player_score" not in match_column_names:
+    connection.execute("ALTER TABLE matches ADD COLUMN player_score INTEGER")
+  if "opponent_score" not in match_column_names:
+    connection.execute("ALTER TABLE matches ADD COLUMN opponent_score INTEGER")
 
 # CREATE SESSION STATS TABLE - ONE ROW PER GAMEMODE
 # (old schema had a single row with id=1; dev-era data is dropped)
@@ -56,6 +69,12 @@ def initialize_database():
       "ALTER TABLE settings ADD COLUMN hotkey TEXT NOT NULL DEFAULT 'F8'"
     )
 
+# ADD HISTORY HOTKEY COLUMN TO EXISTING DATABASES CREATED BEFORE IT EXISTED
+  if "history_hotkey" not in [column[1] for column in existing_columns]:
+    connection.execute(
+      "ALTER TABLE settings ADD COLUMN history_hotkey TEXT NOT NULL DEFAULT 'F9'"
+    )
+
 # KEEP USER INFO AFTER APP SHUTDOWN
   connection.execute("""
         INSERT OR IGNORE INTO settings (id)
@@ -74,12 +93,13 @@ def initialize_database():
 
 
 # GETS THE SAVED USER NAME AND USER ID
-# RETURNS (user_name, launcher, user_id, hotkey)
+# RETURNS (user_name, launcher, user_id, hotkey, history_hotkey)
 def get_settings():
   connection = sqlite3.connect(DATABASE)
 
   settings = connection.execute(
-    "SELECT user_name, launcher, user_id, hotkey FROM settings WHERE id = 1"
+    "SELECT user_name, launcher, user_id, hotkey, history_hotkey "
+    "FROM settings WHERE id = 1"
   ).fetchone()
 
   connection.close()
@@ -87,17 +107,18 @@ def get_settings():
   return settings
 
 
-# UPDATES THE SAVED USER NAME, LAUNCHER, USER ID AND HOTKEY
-def update_settings(user_name, launcher, user_id, hotkey):
+# UPDATES SETTINGS WITHOUT TOUCHING EITHER HOTKEY (FULL SETTINGS SAVE)
+def update_settings(user_name, launcher, user_id,
+                    hotkey, history_hotkey):
   connection = sqlite3.connect(DATABASE)
 
   connection.execute(
     """
     UPDATE settings
-    SET user_name = ?, launcher = ?, user_id = ?, hotkey = ?
+    SET user_name = ?, launcher = ?, user_id = ?, hotkey = ?, history_hotkey = ?
     WHERE id = 1
     """,
-    (user_name, launcher, user_id, hotkey)
+    (user_name, launcher, user_id, hotkey, history_hotkey)
   )
 
   connection.commit()
@@ -117,18 +138,50 @@ def update_settings_hotkey(hotkey):
   connection.close()
 
 
-# SAVES MATCH RESULT FOR MATCH HISTOR VIEWING
-def save_match(result):
+# UPDATES ONLY THE MATCH HISTORY HOTKEY (FRONTEND UI PREFERENCE)
+def update_settings_history_hotkey(hotkey):
+  connection = sqlite3.connect(DATABASE)
+
+  connection.execute(
+    "UPDATE settings SET history_hotkey = ? WHERE id = 1",
+    (hotkey,)
+  )
+
+  connection.commit()
+  connection.close()
+
+
+# SAVES MATCH RESULT FOR MATCH HISTORY VIEWING
+# SCORES MAY BE None WHEN THE API DID NOT PROVIDE THEM - NEVER INVENTED
+def save_match(result, player_score, opponent_score):
   connection = sqlite3.connect(DATABASE)
   played_at = datetime.now().astimezone().isoformat()
 
   connection.execute(
-    "INSERT INTO matches (result, played_at) VALUES (?, ?)",
-    (result, played_at)
+    "INSERT INTO matches (result, played_at, player_score, opponent_score) "
+    "VALUES (?, ?, ?, ?)",
+    (result, played_at, player_score, opponent_score)
     )
 
   connection.commit()
   connection.close()
+
+
+# GETS THE MATCH HISTORY, NEWEST FIRST - USED FOR THE HISTORY WINDOW
+MAX_HISTORY = 50
+
+def get_match_history():
+  connection = sqlite3.connect(DATABASE)
+
+  rows = connection.execute(
+    "SELECT result, played_at, player_score, opponent_score FROM matches "
+    "ORDER BY id DESC LIMIT ?",
+    (MAX_HISTORY,)
+  ).fetchall()
+
+  connection.close()
+
+  return rows
 
 
 # GETS THE CURRENT SESSION W/L AND WIN STREAK FOR ONE GAMEMODE
@@ -162,7 +215,7 @@ def update_session_stats(playlist, wins, losses, streak):
 
 
 # RECORDS A MATCH AND UPDATES THE CURRENT SESSION FOR ONE GAMEMODE
-def record_match(playlist, result):
+def record_match(playlist, result, player_score=None, opponent_score=None):
   wins, losses, streak = get_session_stats(playlist)
 
   if result == "W":
@@ -173,7 +226,7 @@ def record_match(playlist, result):
     losses += 1
     streak = 0
 
-  save_match(result)
+  save_match(result, player_score, opponent_score)
   update_session_stats(playlist, wins, losses, streak)
 
 

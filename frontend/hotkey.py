@@ -18,7 +18,10 @@ MOD_SHIFT = 0x0004
 # F1-F12 virtual key codes (0x70-0x7B)
 VK_FKEYS = {f"F{i}": 0x70 + i - 1 for i in range(1, 13)}
 
-HOTKEY_ID = 1  # id within our application - only one hotkey needed
+# ids within our application - one per registered hotkey
+HOTKEY_ID_SETTINGS = 1
+HOTKEY_ID_HISTORY = 2
+HOTKEY_IDS = (HOTKEY_ID_SETTINGS, HOTKEY_ID_HISTORY)
 
 _user32 = ctypes.windll.user32
 
@@ -34,20 +37,21 @@ def _modifiers_value(modifiers: list[str]) -> int:
   return value
 
 
-def register(hotkey: str, modifiers: list[str] | None = None) -> bool:
+def register(hotkey: str, hotkey_id: int = HOTKEY_ID_SETTINGS,
+             modifiers: list[str] | None = None) -> bool:
   """Registers e.g. 'F8' or 'Ctrl+F8'. Returns False if already taken."""
   key = hotkey.upper()
   if key not in VK_FKEYS:
     return False
   if not _user32.RegisterHotKey(
-    None, HOTKEY_ID, _modifiers_value(modifiers or []), VK_FKEYS[key]
+    None, hotkey_id, _modifiers_value(modifiers or []), VK_FKEYS[key]
   ):
     return False
   return True
 
 
-def unregister() -> None:
-  _user32.UnregisterHotKey(None, HOTKEY_ID)
+def unregister(hotkey_id: int = HOTKEY_ID_SETTINGS) -> None:
+  _user32.UnregisterHotKey(None, hotkey_id)
 
 
 class HotkeyFilter(QAbstractNativeEventFilter):
@@ -55,11 +59,11 @@ class HotkeyFilter(QAbstractNativeEventFilter):
 
   def __init__(self, on_hotkey):
     super().__init__()
-    self.on_hotkey = on_hotkey
+    self.on_hotkey = on_hotkey  # called with the HOTKEY_ID_* that fired
 
   def nativeEventFilter(self, event_type, message):  # noqa: N802 (Qt naming)
     if event_type == b"windows_generic_MSG":
       msg = wt.MSG.from_address(int(message))
-      if msg.message == WM_HOTKEY and msg.wParam == HOTKEY_ID:
-        self.on_hotkey()
+      if msg.message == WM_HOTKEY and msg.wParam in HOTKEY_IDS:
+        self.on_hotkey(msg.wParam)
     return False, 0

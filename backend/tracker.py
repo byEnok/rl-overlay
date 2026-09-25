@@ -11,6 +11,35 @@ PLAYLIST_NAMES = {
 
 my_team = None
 current_playlist = None
+# Last known team scores from UpdateState (Game.Teams).
+# None means unknown - e.g. malformed payloads or pre-feature history rows.
+my_team_score = None
+opp_team_score = None
+
+
+def extract_team_scores(data, team_num):
+    """Finds (player_team_score, opponent_team_score) in an UpdateState payload.
+
+    Scores come from Game.Teams entries ({TeamNum, Score, ...}). Returns
+    (None, None) when the payload is malformed or the player's team has
+    no score yet - callers must not display invented values.
+    """
+    try:
+        teams = data["Game"]["Teams"]
+        player_score = None
+        opponent_score = None
+        for team in teams:
+            if team.get("TeamNum") == team_num:
+                player_score = team.get("Score")
+            else:
+                opponent_score = team.get("Score")
+        if not isinstance(player_score, int):
+            player_score = None
+        if not isinstance(opponent_score, int):
+            opponent_score = None
+        return player_score, opponent_score
+    except (KeyError, TypeError, AttributeError):
+        return None, None
 
 
 def find_playlist_id(data):
@@ -35,9 +64,9 @@ def find_playlist_id(data):
     return None
 
 async def main():
-    global my_team, current_playlist
+    global my_team, current_playlist, my_team_score, opp_team_score
 
-    user_name, launcher, user_id, _hotkey = get_settings()
+    user_name, launcher, user_id, *_ = get_settings()
 
     async with StatsClient() as client:
         async for message in client.events(
@@ -60,6 +89,11 @@ async def main():
                   my_team = player["TeamNum"]
                   break
 
+                if my_team is not None:
+                    my_team_score, opp_team_score = extract_team_scores(
+                        message.data, my_team
+                    )
+
                 playlist_id = find_playlist_id(message.data)
                 if playlist_id in PLAYLIST_NAMES:
                     current_playlist = PLAYLIST_NAMES[playlist_id]
@@ -73,11 +107,15 @@ async def main():
                 result = "W" if my_team == winner_team else "L"
 
                 if current_playlist is not None:
-                    record_match(current_playlist, result)
-                    print(f"{result} in {current_playlist}!")
+                    record_match(current_playlist, result,
+                                 my_team_score, opp_team_score)
+                    print(f"{result} {my_team_score}-{opp_team_score} "
+                          f"in {current_playlist}!")
                 else:
                     print(f"{result} - gamemode not tracked, not recorded.")
 
                 my_team = None
                 current_playlist = None
+                my_team_score = None
+                opp_team_score = None
 

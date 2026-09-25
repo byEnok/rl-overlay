@@ -42,6 +42,16 @@ def update_settings_hotkey(hotkey: str) -> None:
   response.raise_for_status()
 
 
+def update_settings_history_hotkey(hotkey: str) -> None:
+  """Saves only the match history hotkey; other settings are untouched."""
+  response = httpx.patch(
+    f"{BASE_URL}/settings/history_hotkey",
+    json={"hotkey": hotkey},
+    timeout=TIMEOUT,
+  )
+  response.raise_for_status()
+
+
 def get_stats() -> dict:
   """Returns {'1v1': {'wins': int, 'losses': int, 'streak': int},
   '2v2': {...}, '3v3': {...}} or raises."""
@@ -58,3 +68,11 @@ def reset_session(mode: str) -> None:
     timeout=TIMEOUT,
   )
   response.raise_for_status()
+
+
+def get_match_history() -> list[dict]:
+  """Returns newest-first match dicts with keys 'result', 'played_at',
+  'player_score' and 'opponent_score' (scores may be None)."""
+  response = httpx.get(f"{BASE_URL}/history", timeout=TIMEOUT)
+  response.raise_for_status()
+  return response.json()

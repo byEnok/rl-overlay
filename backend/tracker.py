@@ -9,10 +9,10 @@ PLAYLIST_NAMES = {
     playlist_id: name for name, playlist_id in TRACKED_PLAYLISTS.items()
 }
 
+# Last known team scores from UpdateState (Game.Teams).
 my_team = None
 current_playlist = None
-# Last known team scores from UpdateState (Game.Teams).
-# None means unknown - e.g. malformed payloads or pre-feature history rows.
+gamemode_id = None
 my_team_score = None
 opp_team_score = None
 
@@ -64,7 +64,7 @@ def find_playlist_id(data):
     return None
 
 async def main():
-    global my_team, current_playlist, my_team_score, opp_team_score
+    global my_team, current_playlist, my_team_score, opp_team_score, gamemode_id
 
     user_name, launcher, user_id, *_ = get_settings()
 
@@ -95,6 +95,8 @@ async def main():
                     )
 
                 playlist_id = find_playlist_id(message.data)
+                gamemode_id = playlist_id
+
                 if playlist_id in PLAYLIST_NAMES:
                     current_playlist = PLAYLIST_NAMES[playlist_id]
                 else:
@@ -105,10 +107,9 @@ async def main():
                 winner_team = message.data["WinnerTeamNum"]
 
                 result = "W" if my_team == winner_team else "L"
-
+                
                 if current_playlist is not None:
-                    record_match(current_playlist, result,
-                                 my_team_score, opp_team_score)
+                    record_match(current_playlist, result, gamemode_id, my_team_score, opp_team_score)
                     print(f"{result} {my_team_score}-{opp_team_score} "
                           f"in {current_playlist}!")
                 else:
@@ -116,6 +117,7 @@ async def main():
 
                 my_team = None
                 current_playlist = None
+                gamemode_id = None
                 my_team_score = None
                 opp_team_score = None
 

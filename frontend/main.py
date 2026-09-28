@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
   QScrollArea,
   QVBoxLayout,
   QWidget,
+  QFrame,
 )
 
 import frontend.api_client as api
@@ -82,8 +83,13 @@ WIN_COLOR = "#50dc64"
 LOSS_COLOR = "#ff5050"
 STREAK_COLOR = "#ffc850"
 ACCENT_COLOR = "#4db8ff"
+# ACCENT_COLOR_MILD = "#6faed6"
+ACCENT_COLOR_MILD = "#5f9fc7"
 ERROR_COLOR = "#ff5050"
 STATUS_OK_COLOR = "#96dc96"
+# Shared window background (QColor 30, 30, 30) - also used as the
+# "hollow" letter color inside the W/L squares.
+WINDOW_BACKGROUND_COLOR = "#1e1e1e"
 
 
 def format_streak(streak: int) -> str:
@@ -290,7 +296,8 @@ class MatchHistoryWindow(FramelessWindow):
     self.rows_container = QWidget()
     self.rows_layout = QVBoxLayout(self.rows_container)
     self.rows_layout.setContentsMargins(0, 0, 0, 0)
-    self.rows_layout.setSpacing(6)
+    # Decides spacing between matches in history
+    self.rows_layout.setSpacing(20)
     self.rows_layout.addStretch()  # keeps short lists at the top
 
     self.scroll_area = QScrollArea()
@@ -401,7 +408,7 @@ class MatchHistoryWindow(FramelessWindow):
       f"""
       QLabel {{
         background: {color};
-        color: white;
+        color: {WINDOW_BACKGROUND_COLOR};
         font-weight: bold;
         border-radius: 4px;
       }}
@@ -422,32 +429,68 @@ class MatchHistoryWindow(FramelessWindow):
       return f"Yesterday \u00b7 {time_text}"
     return f"{played_at:%b} {played_at.day} - {time_text}"
 
+  @staticmethod
+  def _separator() -> QFrame:
+    line = QFrame()
+    line.setFrameShape(QFrame.Shape.HLine)
+    line.setStyleSheet(f"color: {ACCENT_COLOR_MILD}")
+    # line.setStyleSheet("color: rgba(255, 255, 255, 40);")  # faint white
+    return line
+
+
   @classmethod
   def _match_row(cls, match: dict) -> QWidget:
     """One entry: [square] score on top, date indented below the score."""
     row = QWidget()
     row_layout = QVBoxLayout(row)
     row_layout.setContentsMargins(0, 0, 0, 0)
+    # row_layout.setContentsMargins(0, 3, 0, 0)
     row_layout.setSpacing(2)
+    # row_layout.setSpacing(4)
 
     result = str(match.get("result") or "")
 
     # First line: W/L square followed by the match score.
     top_row = QHBoxLayout()
     top_row.setContentsMargins(0, 0, 0, 0)
+    # top_row.setContentsMargins(0, 0, 0, 4)
+    # top_row.setAlignment
+
     top_row.setSpacing(cls.RESULT_SPACING)
     top_row.addWidget(cls._result_square(result))
+    # top_row.addWidget(cls._result_square(result), 0, Qt.AlignmentFlag.AlignVCenter)
 
     player_score = match.get("player_score")
     opponent_score = match.get("opponent_score")
+
     if isinstance(player_score, int) and isinstance(opponent_score, int):
       # Player's score first, opponent's second.
       score_label = QLabel(f"{player_score}-{opponent_score}")
       score_label.setStyleSheet("font-weight: bold;")
       top_row.addWidget(score_label)
     # Missing scores are simply not shown - never invented.
+
+    # Show gamemode to the far right
     top_row.addStretch()
+
+    gamemode = match.get("gamemode_id")
+    gamemode_names = {
+      10: "1v1",
+      11: "2v2",
+      13: "3v3",
+    }
+
+    if isinstance(gamemode, int):
+      gamemode_label = QLabel(gamemode_names.get(gamemode, "Unknown"))
+      gamemode_label.setStyleSheet(f"""
+          color: {ACCENT_COLOR};
+          font-size: 12px;
+          font-weight: 500;
+      """)
+      top_row.addWidget(gamemode_label)
+
     row_layout.addLayout(top_row)
+
 
     # Second line: date/time, aligned under the score (not the square).
     try:
@@ -460,6 +503,13 @@ class MatchHistoryWindow(FramelessWindow):
     date_label.setContentsMargins(indent, 0, 0, 0)
     date_label.setStyleSheet("color: gray;")
     row_layout.addWidget(date_label)
+
+    # Trying to create thin clean separator between matches in history
+    # Extra breathing room between the date and the line (row spacing is 2).
+    # row_layout.addSpacing(6)
+    row_layout.addSpacing(4)
+    row_layout.addWidget(cls._separator())
+
     return row
 
 
@@ -718,7 +768,7 @@ def run():
   # Dark palette so the overlay fits Rocket League's look.
   app.setStyle("Fusion")
   palette = QPalette()
-  palette.setColor(QPalette.ColorRole.Window, QColor(30, 30, 30))
+  palette.setColor(QPalette.ColorRole.Window, QColor(WINDOW_BACKGROUND_COLOR))
   palette.setColor(QPalette.ColorRole.WindowText, QColor(220, 220, 220))
   palette.setColor(QPalette.ColorRole.Base, QColor(45, 45, 45))
   palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))

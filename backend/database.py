@@ -17,7 +17,8 @@ def initialize_database():
             result TEXT NOT NULL,
             played_at TEXT NOT NULL,
             player_score INTEGER,
-            opponent_score INTEGER
+            opponent_score INTEGER,
+            gamemode_id INTEGER
             )
         """)
 
@@ -152,15 +153,15 @@ def update_settings_history_hotkey(hotkey):
 
 
 # SAVES MATCH RESULT FOR MATCH HISTORY VIEWING
-# SCORES MAY BE None WHEN THE API DID NOT PROVIDE THEM - NEVER INVENTED
-def save_match(result, player_score, opponent_score):
+def save_match(result, player_score, opponent_score, gamemode_id):
   connection = sqlite3.connect(DATABASE)
   played_at = datetime.now().astimezone().isoformat()
 
+  #todo - consider only storing 50 matches in DB - currently no limit
   connection.execute(
-    "INSERT INTO matches (result, played_at, player_score, opponent_score) "
-    "VALUES (?, ?, ?, ?)",
-    (result, played_at, player_score, opponent_score)
+    "INSERT INTO matches (result, played_at, player_score, opponent_score, gamemode_id) "
+    "VALUES (?, ?, ?, ?, ?)",
+    (result, played_at, player_score, opponent_score, gamemode_id)
     )
 
   connection.commit()
@@ -174,7 +175,7 @@ def get_match_history():
   connection = sqlite3.connect(DATABASE)
 
   rows = connection.execute(
-    "SELECT result, played_at, player_score, opponent_score FROM matches "
+    "SELECT result, played_at, player_score, opponent_score, gamemode_id FROM matches "
     "ORDER BY id DESC LIMIT ?",
     (MAX_HISTORY,)
   ).fetchall()
@@ -215,9 +216,13 @@ def update_session_stats(playlist, wins, losses, streak):
 
 
 # RECORDS A MATCH AND UPDATES THE CURRENT SESSION FOR ONE GAMEMODE
-def record_match(playlist, result, player_score=None, opponent_score=None):
+def record_match(playlist, result, gamemode_id, player_score=None, opponent_score=None):
   wins, losses, streak = get_session_stats(playlist)
 
+  # todo Add condition to ignore result if game was cancelled. AKA both scores are 0
+  if player_score in (0, None ) and opponent_score in (0, None):
+    return
+  
   if result == "W":
     wins += 1
     streak += 1
@@ -226,7 +231,7 @@ def record_match(playlist, result, player_score=None, opponent_score=None):
     losses += 1
     streak = 0
 
-  save_match(result, player_score, opponent_score)
+  save_match(result, player_score, opponent_score, gamemode_id)
   update_session_stats(playlist, wins, losses, streak)
 
 

@@ -122,9 +122,10 @@ def history():
       "result": result,
       "played_at": played_at,
       "player_score": player_score,
-      "opponent_score": opponent_score
+      "opponent_score": opponent_score,
+      "gamemode_id": gamemode_id
     }
-    for result, played_at, player_score, opponent_score in get_match_history()
+    for result, played_at, player_score, opponent_score, gamemode_id in get_match_history()
   ]
 
 # GETS THE CURRENT SESSION STATS (PER GAMEMODE)

@@ -13,7 +13,7 @@ import datetime
 import sys
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor, QPalette
+from PySide6.QtGui import QColor, QPalette, QIcon, QAction
 from PySide6.QtWidgets import (
   QApplication,
   QComboBox,
@@ -27,6 +27,8 @@ from PySide6.QtWidgets import (
   QVBoxLayout,
   QWidget,
   QFrame,
+  QSystemTrayIcon,
+  QMenu
 )
 
 import frontend.api_client as api
@@ -188,6 +190,7 @@ class SessionWindow(FramelessWindow):
     style_header_button(gear, HOVER_WHITE)
     gear.clicked.connect(self.app.show_settings)
     header.addWidget(gear)
+    # Quit App Button
     quit_button = QPushButton("✕")
     quit_button.setFixedSize(16, 16)
     quit_button.setToolTip("Quit overlay")
@@ -284,9 +287,10 @@ class MatchHistoryWindow(FramelessWindow):
     )
     self.setWindowTitle("RL Overlay - Match History")
     self.setMinimumWidth(180)
+    # self.setMinimumWidth(220)
 
     layout = QVBoxLayout(self)
-    layout.setContentsMargins(10, 8, 10, 12)
+    layout.setContentsMargins(10, 8, 5, 12)
     layout.setSpacing(4)
 
     layout.addLayout(self.make_header("Match History"))
@@ -443,7 +447,10 @@ class MatchHistoryWindow(FramelessWindow):
     """One entry: [square] score on top, date indented below the score."""
     row = QWidget()
     row_layout = QVBoxLayout(row)
-    row_layout.setContentsMargins(0, 0, 0, 0)
+    # Right margin keeps text (e.g. the gamemode label) clear of the
+    # scrollbar and the window's right edge.
+    row_layout.setContentsMargins(0, 0, 4, 0)
+    # row_layout.setContentsMargins(0, 0, 0, 0)
     # row_layout.setContentsMargins(0, 3, 0, 0)
     row_layout.setSpacing(2)
     # row_layout.setSpacing(4)
@@ -488,6 +495,7 @@ class MatchHistoryWindow(FramelessWindow):
           font-weight: 500;
       """)
       top_row.addWidget(gamemode_label)
+    
 
     row_layout.addLayout(top_row)
 
@@ -521,6 +529,9 @@ class SettingsWindow(FramelessWindow):
     self.app = app
     self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
     self.setWindowTitle("RL Overlay - Settings")
+    # Set width of settings window
+    # self.setMinimumWidth(330)
+    self.setMinimumWidth(230)
 
     outer = QVBoxLayout(self)
     outer.setContentsMargins(16, 8, 16, 16)
@@ -540,10 +551,21 @@ class SettingsWindow(FramelessWindow):
     form.addRow("Launcher", self.launcher_combo)
 
     self.user_id_input = QLineEdit()
-    self.user_id_input.setPlaceholderText("SteamID3 / Epic Account ID")
+    self.user_id_input.setPlaceholderText("SteamID / Epic Account ID")
     form.addRow("ID", self.user_id_input)
 
     outer.addWidget(id_group)
+    button_row = QHBoxLayout()
+    save_button = QPushButton("Save Settings")
+    save_button.clicked.connect(self.on_save_settings)
+    button_row.addWidget(save_button)
+    self.settings_status_label = QLabel("")
+    self.settings_status_label.setStyleSheet(f"color: {STATUS_OK_COLOR};")
+    button_row.addWidget(self.settings_status_label)
+    button_row.addStretch()
+    outer.addLayout(button_row)
+
+
 
     ui_group = QGroupBox("Overlay")
     ui_form = QFormLayout(ui_group)
@@ -565,15 +587,15 @@ class SettingsWindow(FramelessWindow):
     ui_form.addRow("Match history hotkey", self.history_hotkey_combo)
     outer.addWidget(ui_group)
 
-    button_row = QHBoxLayout()
-    save_button = QPushButton("Save Settings")
-    save_button.clicked.connect(self.on_save_settings)
-    button_row.addWidget(save_button)
-    self.settings_status_label = QLabel("")
-    self.settings_status_label.setStyleSheet(f"color: {STATUS_OK_COLOR};")
-    button_row.addWidget(self.settings_status_label)
-    button_row.addStretch()
-    outer.addLayout(button_row)
+    # button_row = QHBoxLayout()
+    # save_button = QPushButton("Save Settings")
+    # save_button.clicked.connect(self.on_save_settings)
+    # button_row.addWidget(save_button)
+    # self.settings_status_label = QLabel("")
+    # self.settings_status_label.setStyleSheet(f"color: {STATUS_OK_COLOR};")
+    # button_row.addWidget(self.settings_status_label)
+    # button_row.addStretch()
+    # outer.addLayout(button_row)
 
 
   def on_save_settings(self):

@@ -1,10 +1,14 @@
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 
-DATABASE = "overlay.db"
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATABASE = PROJECT_ROOT / "overlay.db"
 
 # GAMEMODES WE TRACK (API PlaylistId)
 TRACKED_PLAYLISTS = {"1v1": 10, "2v2": 11, "3v3": 13}
+MAX_HISTORY = 50
 
 # CREATES THE DATABASE TABLES IF THEY DON'T EXIST
 def initialize_database():
@@ -164,12 +168,25 @@ def save_match(result, player_score, opponent_score, gamemode_id):
     (result, played_at, player_score, opponent_score, gamemode_id)
     )
 
+  # Setting Max 50 games saved in DB. At game 51, game 1 is deleted etc
+  connection.execute(
+    """
+    DELETE FROM matches
+    WHERE id NOT IN (
+      SELECT id
+      FROM matches
+      ORDER BY id DESC
+      LIMIT ?
+    )
+    """,(MAX_HISTORY,)
+  )
+
   connection.commit()
   connection.close()
 
 
 # GETS THE MATCH HISTORY, NEWEST FIRST - USED FOR THE HISTORY WINDOW
-MAX_HISTORY = 50
+# MAX_HISTORY = 50
 
 def get_match_history():
   connection = sqlite3.connect(DATABASE)

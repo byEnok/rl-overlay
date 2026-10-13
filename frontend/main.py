@@ -11,9 +11,10 @@ Talks to the backend only through frontend/api_client.py.
 
 import datetime
 import sys
+from pathlib import Path
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QColor, QPalette, QIcon, QAction
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPalette, QIcon, QAction
 from PySide6.QtWidgets import (
   QApplication,
   QComboBox,
@@ -28,7 +29,8 @@ from PySide6.QtWidgets import (
   QWidget,
   QFrame,
   QSystemTrayIcon,
-  QMenu
+  QMenu,
+  QGridLayout
 )
 
 import frontend.api_client as api
@@ -47,6 +49,8 @@ HOVER_RED = "rgba(240, 45, 45, 60)"
 # HOVER_RED = "rgba(255, 80, 80, 60)"
 
 
+
+
 def style_header_button(button: QPushButton, hover_color: str):
   """Flat header button that shows a transparent tint when hovered."""
   button.setStyleSheet(
@@ -61,7 +65,6 @@ def style_header_button(button: QPushButton, hover_color: str):
     """
   )
 
-
 def style_mode_button(button: QPushButton):
   """Flat gamemode tab: hover tint, blue text while it is the active tab."""
   button.setStyleSheet(
@@ -75,6 +78,19 @@ def style_mode_button(button: QPushButton):
     QPushButton:hover {{ background: {HOVER_WHITE}; }}
     QPushButton:pressed {{ background: rgba(255, 255, 255, 80); }}
     QPushButton:checked {{ color: {ACCENT_COLOR}; font-weight: bold; }}
+    """
+  )
+
+def style_reset_session_button(button: QPushButton):
+  """Flat gamemode tab: hover tint, blue text while it is the active tab."""
+  button.setStyleSheet(
+    f"""
+    QPushButton {{
+    background: {HOVER_WHITE};
+    border-radius: 4px;
+    }}
+    QPushButton:hover {{ color: {ACCENT_COLOR}; }}
+    QPushButton:pressed {{ background: {ACCENT_COLOR}; border: 1px solid grey; color: black; }}
     """
   )
 
@@ -93,6 +109,12 @@ STATUS_OK_COLOR = "#96dc96"
 # "hollow" letter color inside the W/L squares.
 WINDOW_BACKGROUND_COLOR = "#1e1e1e"
 
+def get_app_root() -> Path:
+    """Returns the folder containing the executable or project root."""
+    if getattr(sys, "frozen", False):
+      return Path(sys.executable).resolve().parent
+
+    return Path(__file__).resolve().parent.parent
 
 def format_streak(streak: int) -> str:
   if streak == 0:
@@ -102,26 +124,86 @@ def format_streak(streak: int) -> str:
 
 class FramelessWindow(QWidget):
   """Frameless window base with click-and-drag moving."""
+  CORNER_RADIUS = 10
 
   def __init__(self):
     super().__init__()
     self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+    self.setAttribute(
+      Qt.WidgetAttribute.WA_TranslucentBackground
+    )
+
     self._drag_offset = None
 
-  def make_header(self, title_text: str) -> QHBoxLayout:
-    """Header row with a colored title and a close button."""
-    header = QHBoxLayout()
+
+# Creates rounded corners for each window
+  def paintEvent(self, event):
+    painter = QPainter(self)
+    painter.setRenderHint(
+      QPainter.RenderHint.Antialiasing
+    )
+    painter.setPen(Qt.PenStyle.NoPen)
+    painter.setBrush(QColor(WINDOW_BACKGROUND_COLOR))
+
+    path = QPainterPath()
+    path.addRoundedRect(
+      self.rect(),
+      self.CORNER_RADIUS,
+      self.CORNER_RADIUS,
+    )
+    painter.drawPath(path)
+
+  # OLD - Settings & Match History titles + x Buttons
+  # def make_header(self, title_text: str) -> QHBoxLayout:
+  #   """Header row with a colored title and a close button."""
+  #   header = QHBoxLayout()
+  #   title = QLabel(title_text)
+  #   title.setStyleSheet(f"color: {ACCENT_COLOR}; font-weight: bold; font-size: 14px;")
+
+  #   header.addStretch()
+  #   header.addWidget(title)
+  #   header.addStretch()
+
+  #   close_button = QPushButton("✕")
+  #   close_button.setFixedSize(24, 24)
+  #   close_button.setToolTip("Close")
+  #   style_header_button(close_button, HOVER_WHITE)
+  #   close_button.clicked.connect(self.close)
+  #   header.addWidget(close_button)
+  #   return header
+
+
+  # NEW Settings & Match History titles + x Buttons
+  def make_header(self, title_text: str) -> QGridLayout:
+    header = QGridLayout()
+    header.setContentsMargins(0, 0, 0, 0)
+
     title = QLabel(title_text)
-    title.setStyleSheet(f"color: {ACCENT_COLOR}; font-weight: bold;")
-    header.addStretch()
-    header.addWidget(title)
-    header.addStretch()
+    title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    title.setStyleSheet(f"""
+        color: {ACCENT_COLOR};
+        font-weight: bold;
+        font-size: 14px;
+    """)
+
     close_button = QPushButton("✕")
     close_button.setFixedSize(24, 24)
     close_button.setToolTip("Close")
     style_header_button(close_button, HOVER_WHITE)
     close_button.clicked.connect(self.close)
-    header.addWidget(close_button)
+
+    # Equal-width side columns keep the title centered.
+    header.setColumnStretch(0, 1)
+    header.setColumnStretch(1, 0)
+    header.setColumnStretch(2, 1)
+
+    header.addWidget(title, 0, 0, 1, 3)
+    header.addWidget(
+        close_button,
+        0, 2,
+        Qt.AlignmentFlag.AlignRight
+    )
+
     return header
 
   # Frameless window dragging
@@ -141,7 +223,7 @@ class FramelessWindow(QWidget):
 
 
 class SessionWindow(FramelessWindow):
-  """Small frameless overlay showing current session stats."""
+  """Small frameless window showing current session stats."""
 
   def __init__(self, app):
     super().__init__()
@@ -151,7 +233,7 @@ class SessionWindow(FramelessWindow):
       | Qt.WindowType.WindowStaysOnTopHint
       | Qt.WindowType.Tool
     )
-    self.setWindowTitle("RL Overlay - Session")
+    self.setWindowTitle("OMNX - Session")
     # self.setFixedWidth(150)
     self.setMinimumWidth(100)
 
@@ -169,6 +251,7 @@ class SessionWindow(FramelessWindow):
       mode_button.setCheckable(True)
       mode_button.setFixedSize(34, 20)
       style_mode_button(mode_button)
+      mode_button.setCursor(Qt.CursorShape.PointingHandCursor)
       mode_button.setToolTip(f"Show {mode} session stats")
       mode_button.clicked.connect(
         lambda _checked, m=mode: self.select_mode(m)
@@ -180,6 +263,8 @@ class SessionWindow(FramelessWindow):
     reset_button = QPushButton("Reset")
     reset_button.setFixedSize(42, 20)
     reset_button.setToolTip("Reset selected gamemode's session")
+    style_reset_session_button(reset_button)
+    reset_button.setCursor(Qt.CursorShape.PointingHandCursor)
     reset_button.clicked.connect(self.reset_session)
     header.addWidget(reset_button)
 
@@ -188,7 +273,7 @@ class SessionWindow(FramelessWindow):
     gear.setFixedSize(16, 16)
     gear.setToolTip("Settings")
     style_header_button(gear, HOVER_WHITE)
-    gear.clicked.connect(self.app.show_settings)
+    gear.clicked.connect(self.app.toggle_settings)
     header.addWidget(gear)
     # Quit App Button
     quit_button = QPushButton("✕")
@@ -272,7 +357,7 @@ class SessionWindow(FramelessWindow):
 
 
 class MatchHistoryWindow(FramelessWindow):
-  """Frameless overlay listing the stored match history, newest first.
+  """Frameless window listing the stored match history, newest first.
 
   Hidden on startup; toggled with the match history hotkey.
   """
@@ -285,7 +370,7 @@ class MatchHistoryWindow(FramelessWindow):
       | Qt.WindowType.WindowStaysOnTopHint
       | Qt.WindowType.Tool
     )
-    self.setWindowTitle("RL Overlay - Match History")
+    self.setWindowTitle("OMNX - Match History")
     self.setMinimumWidth(180)
     # self.setMinimumWidth(220)
 
@@ -333,7 +418,7 @@ class MatchHistoryWindow(FramelessWindow):
     self.refresh()
 
   def place_under_session(self, margin: int = 10):
-    """Default position: top-right, directly under the session overlay."""
+    """Default position: top-right, directly under the session window."""
     session = self.app.session_window
     self.adjustSize()
     # Never taller than what fits between the session window and the
@@ -522,13 +607,17 @@ class MatchHistoryWindow(FramelessWindow):
 
 
 class SettingsWindow(FramelessWindow):
-  """Frameless settings window, styled like the session overlay."""
+  """Frameless settings window, styled like the session window."""
 
   def __init__(self, app):
     super().__init__()
     self.app = app
-    self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-    self.setWindowTitle("RL Overlay - Settings")
+    self.setWindowFlags(
+      Qt.WindowType.FramelessWindowHint
+      | Qt.WindowType.WindowStaysOnTopHint
+      | Qt.WindowType.Tool
+    )
+    self.setWindowTitle("OMNX - Settings")
     # Set width of settings window
     # self.setMinimumWidth(330)
     self.setMinimumWidth(230)
@@ -557,6 +646,7 @@ class SettingsWindow(FramelessWindow):
     outer.addWidget(id_group)
     button_row = QHBoxLayout()
     save_button = QPushButton("Save Settings")
+    save_button.setCursor(Qt.CursorShape.PointingHandCursor)
     save_button.clicked.connect(self.on_save_settings)
     button_row.addWidget(save_button)
     self.settings_status_label = QLabel("")
@@ -659,6 +749,9 @@ class OverlayApp:
     self.history_window.place_under_session()
     self.settings_window = None  # created lazily on first open
 
+    # Create systemtray icon ID5
+    self.setup_tray()
+
     self.poll_timer = QTimer()
     self.poll_timer.setInterval(STATS_POLL_MS)
     self.poll_timer.timeout.connect(self.session_window.refresh_stats)
@@ -677,10 +770,36 @@ class OverlayApp:
     self.hotkey_filter = hotkey.HotkeyFilter(self.on_hotkey)
     self.qt_app.installNativeEventFilter(self.hotkey_filter)
 
+  def show_overlay(self):
+    self.session_window.show()
+    self.session_window.raise_()
+    self.session_window.activateWindow()
+
+  # System Tray function ID5
+  def setup_tray(self):
+    self.tray = QSystemTrayIcon(self.qt_app)
+    # Old icon.png for Dev
+    # self.tray.setIcon(QIcon("icon.png"))
+    self.tray.setIcon(QIcon(str(get_app_root() / "icon.png")))
+
+    menu = QMenu()
+    open_action = QAction("Open Overlay", self.qt_app)
+    open_action.triggered.connect(self.show_overlay)
+    menu.addAction(open_action)
+
+    menu.addSeparator()
+
+    quit_action = QAction("Quit", self.qt_app)
+    quit_action.triggered.connect(self.quit)
+    menu.addAction(quit_action)
+
+    self.tray.setContextMenu(menu)
+    self.tray.show()
+
   def on_hotkey(self, hotkey_id: int):
     """Dispatches a fired hotkey by its id."""
     if hotkey_id == hotkey.HOTKEY_ID_SETTINGS:
-      self.show_settings()
+      self.toggle_settings()
     elif hotkey_id == hotkey.HOTKEY_ID_HISTORY:
       self.toggle_history()
 
@@ -694,7 +813,11 @@ class OverlayApp:
     self.history_window.show()
     self.history_window.raise_()
 
-  def show_settings(self):
+  def toggle_settings(self):
+    """Shows or hides the settings window (hotkey and gear button)."""
+    if self.settings_window is not None and self.settings_window.isVisible():
+      self.settings_window.hide()
+      return
     if self.settings_window is None:
       self.settings_window = SettingsWindow(self)
       self.settings_window.load_settings()
@@ -779,15 +902,19 @@ class OverlayApp:
   def quit(self):
     hotkey.unregister(hotkey.HOTKEY_ID_SETTINGS)
     hotkey.unregister(hotkey.HOTKEY_ID_HISTORY)
+    # ID5
+    self.tray.hide()
     self.qt_app.quit()
 
 
 def run():
   app = QApplication(sys.argv)
-  # The session overlay is a Qt.Tool window, which Qt does not count as a
+  # The session window is a Qt.Tool window, which Qt does not count as a
   # "main window" - so we control quitting ourselves via the X button.
   app.setQuitOnLastWindowClosed(False)
-  # Dark palette so the overlay fits Rocket League's look.
+
+
+  # Dark palette so the window fits Rocket League's look.
   app.setStyle("Fusion")
   palette = QPalette()
   palette.setColor(QPalette.ColorRole.Window, QColor(WINDOW_BACKGROUND_COLOR))

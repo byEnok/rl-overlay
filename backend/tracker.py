@@ -22,7 +22,7 @@ def extract_team_scores(data, team_num):
 
     Scores come from Game.Teams entries ({TeamNum, Score, ...}). Returns
     (None, None) when the payload is malformed or the player's team has
-    no score yet - callers must not display invented values.
+    no score yet. callers must not display invented values.
     """
     try:
         teams = data["Game"]["Teams"]
@@ -45,8 +45,8 @@ def extract_team_scores(data, team_num):
 def find_playlist_id(data):
     """Finds the first 'PlaylistId' value anywhere in the event payload.
 
-    The exact location depends on the message shape, so we search
-    recursively instead of hardcoding a path.
+    The exact location depends on the message shape, so the search
+    is done recursively instead of hardcoding a path.
     Returns the PlaylistId (int) or None.
     """
     if isinstance(data, dict):
@@ -73,7 +73,12 @@ async def main():
             "UpdateState",
             "MatchEnded"
         ):
+            # Data about everything. Gamemode, Players, skin, boost etc.
             # print(message.data)
+            # print(message.event)
+            # if message.event == "MatchEnded":
+            #   print(message.data)
+
             if message.event == "UpdateState":
 
 

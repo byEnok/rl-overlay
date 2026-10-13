@@ -1,10 +1,29 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+import sys
+import os
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATABASE = PROJECT_ROOT / "overlay.db"
+# Production: database in APPDATA/LOCAL folder
+# if getattr(sys, "frozen", False):
+if "__compiled__" in globals():
+  local_appdata = os.getenv("LOCALAPPDATA")
+
+  if not local_appdata:
+    raise RuntimeError("LOCALAPPDATA environment variable is not set")
+
+  DB_DIR = Path(local_appdata) / "OMNX"
+  
+else: 
+  # Development: database in project root
+  DB_DIR = Path(__file__).resolve().parent.parent
+
+DB_DIR.mkdir(parents=True, exist_ok=True)
+
+
+DATABASE = DB_DIR / "overlay.db"
+
 
 # GAMEMODES WE TRACK (API PlaylistId)
 TRACKED_PLAYLISTS = {"1v1": 10, "2v2": 11, "3v3": 13}
@@ -27,7 +46,6 @@ def initialize_database():
         """)
 
 # ADD SCORE COLUMNS TO DATABASES CREATED BEFORE THEY EXISTED (NULLABLE -
-# OLD ROWS SIMPLY HAVE NO SCORE, WHICH THE UI HANDLES)
   match_columns = connection.execute(
     "PRAGMA table_info(matches)"
   ).fetchall()

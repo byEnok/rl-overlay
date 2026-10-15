@@ -1,7 +1,7 @@
 
 <center>
 
-![OMNX Overlay](icon.png)
+  <img src="icon.png" alt="OMNX logo" width="full">
 
 </center>
 

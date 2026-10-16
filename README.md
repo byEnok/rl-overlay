@@ -6,15 +6,20 @@
 <div align="center">
   <h1 align="center">OMNX - A Rocket League Overlay </h1>
 </div>
- 
 
+<div align=center>
+  <a href="https://github.com/byEnok/rl-overlay/releases">Download Latest Release</a>
+</div>
 
-<a href="#linkComingSoon">Download coming soon</a>
 <a id="readme-top"></a>
 
-  <!-- <details> -->
+<br>
+
+  <details open>
   <summary><strong>Table of Contents</strong></summary>
-    <ol style="list-style-position: outside; padding-left: 2%; inline-block; text-align: left;">
+    <!-- <ol style="list-style-position: outside; padding-left: 2%; inline-block; text-align: left;"> -->
+    <!-- <ol style="display: table; margin: 0 auto; padding-left: 25px; text-align: left;"> -->
+    <ol style="list-style-position: inside; padding-left: 2%; text-align: left;">
         <li><a href="#features">Features</a></li>
         <li><a href="#windows">Windows</a></li>
         <li><a href="#setup">Setup</a></li>
@@ -22,14 +27,18 @@
         <li><a href="#troubleshooting">Troubleshooting</a></li>
         <li><a href="#privacy">Privacy</a></li>
     </ol>
-  <!-- </details> -->
+  </details>
 
-## **Track your wins, losses, win streaks and last 50 ranked matches with a lightweight, easy-to-use overlay.**
- **Your data stays on your computer** OMNX stores your match history and statistics locally. Nothing is uploaded or sent to an external server.
+  
+<br>
+<div align=center> 
+  <h3>Track your wins, losses, win streaks and last 50 ranked matches with a lightweight, easy-to-use overlay</h3>
+</div>
+
+<br>
 
 
-### **Features**
-
+## **Features**
 - **W/L Tracking** - Track wins and losses in **Ranked** 1v1, 2v2 and 3v3
 
 - **Win streaks** - Keep track of your current streak
@@ -48,11 +57,9 @@
 
 - **System Tray** – Access OMNX from the system tray and quit the application directly from there
 
+<br>
 
 ## **Windows**
-
-### OMNX consists of three windows:
-
  - Session - View your current W/L statistics and win streaks
  - Settings - Configure your launcher ID and hotkeys.
  - Match history - Browse your 50 most recent ranked matches.
@@ -60,7 +67,6 @@
 <br>
 
 # **Setup**
-### **Follow these three steps to get started**
 
 #### **1. Configure Rocket League**
 
@@ -78,6 +84,7 @@
 
 **Save the file** before launching Rocket League.
 
+<br>
 
 #### **2. Configure Your Launcher ID**
 
@@ -88,6 +95,8 @@
   - **Epic Games** – Enter your Epic Games ID (Random letters and numbers e.g: 3444634fab9a427ab453d4d232aad97e)
 
 Your current in-game name is also recommended, but optional. It helps OMNX identify your player more reliably.
+
+<br>
 
 #### **3. Configure Display Mode**
 
@@ -124,6 +133,8 @@ Once everything is configured, launch Rocket League and OMNX.
 <p align="left">(<a href="#readme-top">back to top</a>)</p>
 
 <br>
+
+<a href="https://github.com/byEnok/rl-overlay/releases">Download Latest Release</a>
 
 # **Troubleshooting**
 

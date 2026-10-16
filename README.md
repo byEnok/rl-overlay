@@ -139,20 +139,21 @@ Once everything is configured, launch Rocket League and OMNX.
 # **Troubleshooting**
 
 ### **If OMNX does not track your matches:**
-- Verify that the correct launcher ID is configured.
+- Verify that the **correct** launcher ID is configured.
 
 - Check that DefaultStatsAPI.ini contains the required settings.
 
 - Restart Rocket League after changing the configuration file.
 
-- Make sure you are playing Ranked 1v1, 2v2, or 3v3.
+- Make sure you are playing **Ranked** 1v1, 2v2, or 3v3.
 
 <br>
 
 # **Privacy**
 
-OMNX is designed to run locally.
-
-Match history, statistics, and application data are stored on your computer and persist between restarts.
+### OMNX is designed to run locally.
+ - No data transmission: Your match history and statistics are never uploaded or sent to external servers.
+ - Local data storage: Match history, statistics, and application settings are stored on your computer and persist between restarts.
+ - On Windows, your data is stored in C:\Users\<username>\AppData\Local\OMNX\overlay.db.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

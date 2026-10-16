@@ -1,9 +1,7 @@
 
-<center>
-
+<div align=center>
   <img src="icon.png" alt="OMNX logo" width="full">
-
-</center>
+</div>
 
 <div align="center">
   <h1 align="center">OMNX - A Rocket League Overlay </h1>

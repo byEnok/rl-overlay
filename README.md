@@ -54,8 +54,10 @@
 - **Session Reset** – Reset your session statistics without deleting your match history
 
 - **Local Storage** – Your data stays on your computer.
+  
+- **Quit from Session Window** – Close OMNX using the "X" button in the session window.
 
-- **System Tray** – Access OMNX from the system tray and quit the application directly from there
+- **System Tray** – Quit OMNX directly from its system tray icon.
 
 <br>
 
@@ -68,43 +70,47 @@
 
 # **Setup**
 
-#### **1. Configure Rocket League**
+### **1. Configure Rocket League**
 
 - Locate your Rocket League installation folder and open:
-
   - rocketleague\TAGame\Config\DefaultStatsAPI.ini
 
-
-- Add or update the following settings:
-
-  - **PacketSendRate=2**
+- Add or update these lines:
+  - **PacketSendRate=1**
   - **Port=49123**
 
-*If these settings already exist, update their values instead of adding duplicate entries.*
-
-**Save the file** before launching Rocket League.
+**Save the file** before exiting and don't launch Rocket League yet.
 
 <br>
 
-#### **2. Configure Your Launcher ID**
+### **2. Configure Your Launcher & Player ID**
 
-- Open the **OMNX Settings** and enter the ID for the launcher you use to play Rocket League:
+- Open the Settings window in OMNX and select the launcher you use to play Rocket League.
+- Enter the corresponding player ID:
+  - **Steam** – Your 17-digit Steam ID (e.g: 76561197960287930)
+  - **Epic Games** – Your Epic Games Account ID (e.g: 3444634fab9a427ab453d4d232aad97e)
 
-  - **Steam** – Enter your Steam ID (17-digit number e.g: 76561197960287930)
+- In-game name (optional but recommended) – Enter your current Rocket League display name to help OMNX identify you more reliably.
 
-  - **Epic Games** – Enter your Epic Games ID (Random letters and numbers e.g: 3444634fab9a427ab453d4d232aad97e)
-
-Your current in-game name is also recommended, but optional. It helps OMNX identify your player more reliably.
+**Remember to save your settings!**
 
 <br>
 
-#### **3. Configure Display Mode**
+**IMPORTANT!**
 
-Set Rocket League's display mode to Borderless so the overlay can appear over the game.
+Complete Steps 1 and 2 before launching Rocket League. Make sure you've saved both the configuration file and your OMNX settings.
 
-If you prefer exclusive fullscreen, you can keep that and just place the overlay on a Second Monitor.
+<br>
 
-Once everything is configured, launch Rocket League and OMNX.
+### **3. Configure Display Mode**
+
+- You can now launch Rocket League.
+
+- Set Rocket League's display mode to Borderless so the overlay can appear over the game.
+
+- If you prefer exclusive fullscreen, you can keep that and just place the overlay on a Second Monitor.
+
+Once everything is configured, launch Rocket League and OMNX in no particular order.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -37,8 +37,16 @@
 
 <br>
 
+## Installation
 
-## **Features**
+OMNX does not require installation. 
+Download the latest release, extract the files, and run OMNX.exe.
+
+Once started, OMNX runs in the background and tracks your Rocket League matches while displaying your statistics through the overlay. You can close OMNX at any time from the session window or system tray.
+
+<br>
+
+## Features
 - **W/L Tracking** - Track wins and losses in **Ranked** 1v1, 2v2 and 3v3
 
 - **Win streaks** - Keep track of your current streak
@@ -61,14 +69,14 @@
 
 <br>
 
-## **Windows**
+## Windows
  - Session - View your current W/L statistics and win streaks
  - Settings - Configure your launcher ID and hotkeys.
  - Match history - Browse your 50 most recent ranked matches.
 
 <br>
 
-# **Setup**
+## Setup
 
 ### **1. Configure Rocket League**
 
@@ -116,7 +124,7 @@ Once everything is configured, launch Rocket League and OMNX in no particular or
 
 <br>
 
-# **Screenshots**
+# Screenshots
 <table align="center" >
   <tr>
     <td align="center" valign="top">
@@ -142,7 +150,7 @@ Once everything is configured, launch Rocket League and OMNX in no particular or
 
 <a href="https://github.com/byEnok/rl-overlay/releases">Download Latest Release</a>
 
-# **Troubleshooting**
+# Troubleshooting
 
 ### **If OMNX does not track your matches:**
 - Verify that the **correct** launcher ID is configured.
@@ -155,7 +163,7 @@ Once everything is configured, launch Rocket League and OMNX in no particular or
 
 <br>
 
-# **Privacy**
+# Privacy
 
 ### OMNX is designed to run locally.
  - No data transmission: Your match history and statistics are never uploaded or sent to external servers.

@@ -1,13 +1,4 @@
-"""Rocket League Overlay - PySide6 frontend.
-
-Two windows:
-  * Session overlay - frameless, always-on-top, draggable, with a gear
-    button to open settings.
-  * Settings window - normal window, opens via the gear button or a
-    global hotkey (configurable in the settings itself).
-
-Talks to the backend only through frontend/api_client.py.
-"""
+# Rocket League Overlay - PySide6 frontend.
 
 import datetime
 import sys
@@ -47,9 +38,6 @@ GAMEMODES = ["1v1", "2v2", "3v3"]
 HOVER_WHITE = "rgba(255, 255, 255, 40)"
 HOVER_RED = "rgba(240, 45, 45, 60)"
 # HOVER_RED = "rgba(255, 80, 80, 60)"
-
-
-
 
 def style_header_button(button: QPushButton, hover_color: str):
   """Flat header button that shows a transparent tint when hovered."""
@@ -152,25 +140,6 @@ class FramelessWindow(QWidget):
       self.CORNER_RADIUS,
     )
     painter.drawPath(path)
-
-  # OLD - Settings & Match History titles + x Buttons
-  # def make_header(self, title_text: str) -> QHBoxLayout:
-  #   """Header row with a colored title and a close button."""
-  #   header = QHBoxLayout()
-  #   title = QLabel(title_text)
-  #   title.setStyleSheet(f"color: {ACCENT_COLOR}; font-weight: bold; font-size: 14px;")
-
-  #   header.addStretch()
-  #   header.addWidget(title)
-  #   header.addStretch()
-
-  #   close_button = QPushButton("✕")
-  #   close_button.setFixedSize(24, 24)
-  #   close_button.setToolTip("Close")
-  #   style_header_button(close_button, HOVER_WHITE)
-  #   close_button.clicked.connect(self.close)
-  #   header.addWidget(close_button)
-  #   return header
 
 
   # NEW Settings & Match History titles + x Buttons
@@ -429,12 +398,20 @@ class MatchHistoryWindow(FramelessWindow):
       available_height - session.y() - session.height() - 2 * margin
     )
     self.setFixedHeight(min(self.sizeHint().height(), max_height))
-    self.move(session.x(), session.y() + session.height() + margin)
+    # PLACES WINDOW EQUAL TO THE LEFT UNDER SESSION WINDOW
+    # self.move(session.x(), session.y() + session.height() + margin)
+
+    # PLACES MATCH HISTORY CENTER UNDER SESSION WINDOW
+    self.move( 
+      session.x() + (session.width() - self.width()) // 2,
+      session.y() + session.height() + margin,
+    )
 
   def refresh(self):
+
     """Reloads the match list from the backend."""
     while self.rows_layout.count() > 1:  # last item is the trailing stretch
-      item = self.rows_layout.takeAt(0)
+      item = self.rows_layout.takeAt(self.rows_layout.count() - 2) # Tried to remove double label when not matches was recorded but this didn't work
       if item.widget():
         item.widget().deleteLater()
 
@@ -452,8 +429,7 @@ class MatchHistoryWindow(FramelessWindow):
       return
 
     for match in history:
-      self.rows_layout.insertWidget(self.rows_layout.count() - 1,
-                                    self._match_row(match))
+      self.rows_layout.insertWidget(self.rows_layout.count() - 1, self._match_row(match))
     self._apply_visible_entry_cap(len(history))
     self.adjustSize()
 
@@ -631,9 +607,9 @@ class SettingsWindow(FramelessWindow):
     id_group = QGroupBox("Player identification")
     form = QFormLayout(id_group)
 
-    self.user_name_input = QLineEdit()
-    self.user_name_input.setPlaceholderText("Display name")
-    form.addRow("Name", self.user_name_input)
+    # self.user_name_input = QLineEdit()
+    # self.user_name_input.setPlaceholderText("Display name")
+    # form.addRow("Name", self.user_name_input)
 
     self.launcher_combo = QComboBox()
     self.launcher_combo.addItems(LAUNCHERS)
@@ -641,7 +617,14 @@ class SettingsWindow(FramelessWindow):
 
     self.user_id_input = QLineEdit()
     self.user_id_input.setPlaceholderText("SteamID / Epic Account ID")
-    form.addRow("ID", self.user_id_input)
+
+    label = QLabel('ID <span style="color: #d32f2f;">*</span> ')
+    form.addRow(label, self.user_id_input)
+    # form.addRow("ID *", self.user_id_input)
+
+    # Red border while the ID field is empty, normal border otherwise.
+    self.user_id_input.textChanged.connect(self._update_id_border)
+    self._update_id_border()
 
     outer.addWidget(id_group)
     button_row = QHBoxLayout()
@@ -687,9 +670,26 @@ class SettingsWindow(FramelessWindow):
     # button_row.addStretch()
     # outer.addLayout(button_row)
 
+  def place_center_of_screen(self):
+    screen = self.screen() or QApplication.primaryScreen()
+    screen_geometry = screen.availableGeometry()
+
+    self.adjustSize()
+
+    x = screen_geometry.x() + (screen_geometry.width() - self.width()) // 2
+    y = screen_geometry.y() + (screen_geometry.height() - self.height()) // 2
+
+    self.move(x,y)
+
+  def _update_id_border(self):
+    empty = not self.user_id_input.text().strip()
+    border = "1px solid #e53935" if empty else "1px solid gray"
+    self.user_id_input.setStyleSheet(
+      f"QLineEdit {{ border: {border}; border-radius: 3px; }}"
+    )
 
   def on_save_settings(self):
-    user_name = self.user_name_input.text()
+    # user_name = self.user_name_input.text()
     launcher = self.launcher_combo.currentText()
     user_id = self.user_id_input.text().strip()
 
@@ -698,7 +698,8 @@ class SettingsWindow(FramelessWindow):
       return
 
     try:
-      api.update_settings(user_name, launcher, user_id)
+      # api.update_settings(user_name, launcher, user_id)
+      api.update_settings(launcher, user_id)
       self._set_status("Settings saved!")
     except Exception:
       self._set_status("Could not reach backend!", error=True)
@@ -707,7 +708,7 @@ class SettingsWindow(FramelessWindow):
     """Pre-fills the fields with values from the backend."""
     try:
       settings = api.get_settings()
-      self.user_name_input.setText(settings["user_name"] or "")
+      # self.user_name_input.setText(settings["user_name"] or "")
       self.launcher_combo.setCurrentText(settings["launcher"] or LAUNCHERS[0])
       # user_id is stored as "launcher|id|0" - show only the raw id part.
       user_id = settings["user_id"] or ""
@@ -821,6 +822,7 @@ class OverlayApp:
     if self.settings_window is None:
       self.settings_window = SettingsWindow(self)
       self.settings_window.load_settings()
+      self.settings_window.place_center_of_screen()
     self.settings_window.show()
     self.settings_window.raise_()
     self.settings_window.activateWindow()

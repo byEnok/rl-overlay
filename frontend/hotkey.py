@@ -18,7 +18,7 @@ MOD_SHIFT = 0x0004
 # F1-F12 virtual key codes (0x70-0x7B)
 VK_FKEYS = {f"F{i}": 0x70 + i - 1 for i in range(1, 13)}
 
-# ids within our application - one per registered hotkey
+# ids within the application - one per registered hotkey
 HOTKEY_ID_SETTINGS = 1
 HOTKEY_ID_HISTORY = 2
 HOTKEY_IDS = (HOTKEY_ID_SETTINGS, HOTKEY_ID_HISTORY)

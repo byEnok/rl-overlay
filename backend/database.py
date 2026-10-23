@@ -1,12 +1,10 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-import sys
 import os
 
 
 # Production: database in APPDATA/LOCAL folder
-# if getattr(sys, "frozen", False):
 if "__compiled__" in globals():
   local_appdata = os.getenv("LOCALAPPDATA")
 
@@ -25,7 +23,7 @@ DB_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE = DB_DIR / "overlay.db"
 
 
-# GAMEMODES WE TRACK (API PlaylistId)
+# TRACKED GAMEMODES (API PlaylistId)
 TRACKED_PLAYLISTS = {"1v1": 10, "2v2": 11, "3v3": 13}
 MAX_HISTORY = 50
 
@@ -56,7 +54,6 @@ def initialize_database():
     connection.execute("ALTER TABLE matches ADD COLUMN opponent_score INTEGER")
 
 # CREATE SESSION STATS TABLE - ONE ROW PER GAMEMODE
-# (old schema had a single row with id=1; dev-era data is dropped)
   old_columns = connection.execute(
     "PRAGMA table_info(session_stats)"
   ).fetchall()
@@ -72,11 +69,10 @@ def initialize_database():
             )
         """)
 
-# CREATE USER NAME AND USER ID TABLE
+# CREATE USER TABLE
   connection.execute("""
         CREATE TABLE IF NOT EXISTS settings (
             id INTEGER PRIMARY KEY CHECK (id = 1),
-            user_name TEXT NOT NULL DEFAULT '',
             launcher TEXT NOT NULL DEFAULT 'Steam',
             user_id TEXT NOT NULL DEFAULT '',
             hotkey TEXT NOT NULL DEFAULT 'F8'
@@ -121,7 +117,8 @@ def get_settings():
   connection = sqlite3.connect(DATABASE)
 
   settings = connection.execute(
-    "SELECT user_name, launcher, user_id, hotkey, history_hotkey "
+    # "SELECT user_name, launcher, user_id, hotkey, history_hotkey "
+    "SELECT launcher, user_id, hotkey, history_hotkey "
     "FROM settings WHERE id = 1"
   ).fetchone()
 
@@ -131,17 +128,17 @@ def get_settings():
 
 
 # UPDATES SETTINGS WITHOUT TOUCHING EITHER HOTKEY (FULL SETTINGS SAVE)
-def update_settings(user_name, launcher, user_id,
+def update_settings(launcher, user_id,
                     hotkey, history_hotkey):
   connection = sqlite3.connect(DATABASE)
 
   connection.execute(
     """
     UPDATE settings
-    SET user_name = ?, launcher = ?, user_id = ?, hotkey = ?, history_hotkey = ?
+    SET launcher = ?, user_id = ?, hotkey = ?, history_hotkey = ?
     WHERE id = 1
     """,
-    (user_name, launcher, user_id, hotkey, history_hotkey)
+    (launcher, user_id, hotkey, history_hotkey)
   )
 
   connection.commit()

@@ -45,7 +45,6 @@ async def lifespan(app: FastAPI):
     pass
 
 class Settings(BaseModel):
-  user_name: str | None = None
   launcher: str
   user_id: str
   hotkey: str | None = None  # frontend UI preference - key that opens settings
@@ -63,10 +62,9 @@ def root():
 
 @app.get("/settings")
 def settings():
-  user_name, launcher, user_id, hotkey, history_hotkey = get_settings()
+  launcher, user_id, hotkey, history_hotkey = get_settings()
 
   return {
-    "user_name": user_name,
     "launcher": launcher,
     "user_id": user_id,
     "hotkey": hotkey,
@@ -79,13 +77,12 @@ def update_user_settings(settings: Settings):
 
   # Keep the stored hotkeys when the request doesn't include one.
   stored = get_settings()
-  hotkey = settings.hotkey if settings.hotkey is not None else stored[3]
+  hotkey = settings.hotkey if settings.hotkey is not None else stored[2]
   history_hotkey = (
-    settings.history_hotkey if settings.history_hotkey is not None else stored[4]
+    settings.history_hotkey if settings.history_hotkey is not None else stored[3]
   )
 
   update_settings(
-    settings.user_name or "",
     settings.launcher,
     full_user_id,
     hotkey,

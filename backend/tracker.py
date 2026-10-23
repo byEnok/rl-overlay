@@ -66,7 +66,7 @@ def find_playlist_id(data):
 async def main():
     global my_team, current_playlist, my_team_score, opp_team_score, gamemode_id
 
-    user_name, launcher, user_id, *_ = get_settings()
+    launcher, user_id, *_ = get_settings()
 
     async with StatsClient() as client:
         async for message in client.events(
@@ -76,11 +76,8 @@ async def main():
             # Data about everything. Gamemode, Players, skin, boost etc.
             # print(message.data)
             # print(message.event)
-            # if message.event == "MatchEnded":
-            #   print(message.data)
 
             if message.event == "UpdateState":
-
 
                 players = message.data["Players"]
 
@@ -88,8 +85,8 @@ async def main():
                   if player["PrimaryId"] != user_id:
                     continue
 
-                  if user_name and player["Name"] != user_name:
-                    continue
+                  # if user_name and player["Name"] != user_name:
+                  #   continue
 
                   my_team = player["TeamNum"]
                   break

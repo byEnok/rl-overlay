@@ -1,8 +1,4 @@
-"""HTTP client for talking to the backend.
-
-The frontend must never touch SQLite directly - all data flows
-through the backend API (see AGENTS.md).
-"""
+"""HTTP client for talking to the backend. All data flows through the backend API."""
 
 import httpx
 
@@ -18,10 +14,12 @@ def get_settings() -> dict:
 
 
 def update_settings(
-  user_name: str, launcher: str, user_id: str, hotkey: str | None = None
+  # user_name: str, launcher: str, user_id: str, hotkey: str | None = None
+  launcher: str, user_id: str, hotkey: str | None = None
 ) -> None:
   """Sends new settings to the backend. hotkey=None keeps the stored one."""
-  payload = {"user_name": user_name, "launcher": launcher, "user_id": user_id}
+  # payload = {"user_name": user_name, "launcher": launcher, "user_id": user_id}
+  payload = {"launcher": launcher, "user_id": user_id}
   if hotkey is not None:
     payload["hotkey"] = hotkey
   response = httpx.post(

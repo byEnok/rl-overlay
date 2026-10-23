@@ -20,7 +20,9 @@
     <!-- <ol style="list-style-position: outside; padding-left: 2%; inline-block; text-align: left;"> -->
     <!-- <ol style="display: table; margin: 0 auto; padding-left: 25px; text-align: left;"> -->
     <ol style="list-style-position: inside; padding-left: 2%; text-align: left;">
-        <li><a href="#features">Features</a></li>
+        <li><a href="#installation">Installation</a></li> 
+        <li><a href="#features">Features</a></li> 
+        <li><a href="#recording-match-results">Recording Match Results</a></li> 
         <li><a href="#windows">Windows</a></li>
         <li><a href="#setup">Setup</a></li>
         <li><a href="#screenshots">Screenshots</a></li>
@@ -39,10 +41,25 @@
 
 ## Installation
 
-OMNX does not require installation. 
-Download the latest release, extract the files, and run OMNX.exe.
+### OMNX does not require installation. 
 
-Once started, OMNX runs in the background and tracks your Rocket League matches while displaying your statistics through the overlay. You can close OMNX at any time from the session window or system tray.
+Download the latest release and run OMNX.exe.
+
+Once started, OMNX runs in the background and tracks your Rocket League matches while displaying your statistics through the overlay. You can close OMNX at any time from the **session window** or **system tray**.
+
+<br>
+
+### Windows Security Warning
+
+When running OMNX for the first time, Windows may display a "Windows protected your PC" warning because the application is not yet recognized by Microsoft SmartScreen.
+
+If you downloaded OMNX from the official GitHub Releases page and want to proceed:
+
+Click More info.
+
+Click Run anyway.
+
+This warning may appear because OMNX does not yet have an established reputation with Microsoft SmartScreen and is not signed with a code-signing certificate.
 
 <br>
 
@@ -66,6 +83,14 @@ Once started, OMNX runs in the background and tracks your Rocket League matches 
 - **Quit from Session Window** – Close OMNX using the "X" button in the session window.
 
 - **System Tray** – Quit OMNX directly from its system tray icon.
+
+<br>
+
+## IMPORTANT
+### Recording Match Results
+OMNX records a match result when Rocket League displays the final victory screen showing which team won.
+
+Do not leave the match immediately after a forfeit. Wait until the final victory screen appears, even if there's a replay to watch. If you leave before this screen appears, OMNX may not record the match result.
 
 <br>
 
@@ -93,12 +118,10 @@ Once started, OMNX runs in the background and tracks your Rocket League matches 
 
 ### **2. Configure Your Launcher & Player ID**
 
-- Open the Settings window in OMNX and select the launcher you use to play Rocket League.
-- Enter the corresponding player ID:
+- Open OMNX, go to Settings, and select the launcher you use to play Rocket League.
+- - Enter the player ID for your selected launcher:
   - **Steam** – Your 17-digit Steam ID (e.g: 76561197960287930)
   - **Epic Games** – Your Epic Games Account ID (e.g: 3444634fab9a427ab453d4d232aad97e)
-
-- In-game name (optional but recommended) – Enter your current Rocket League display name to help OMNX identify you more reliably.
 
 **Remember to save your settings!**
 
@@ -118,7 +141,7 @@ Complete Steps 1 and 2 before launching Rocket League. Make sure you've saved bo
 
 - If you prefer exclusive fullscreen, you can keep that and just place the overlay on a Second Monitor.
 
-Once everything is configured, launch Rocket League and OMNX in no particular order.
+ <!-- Once setup is complete, you can launch Rocket League and OMNX in any order. -->
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -157,7 +180,9 @@ Once everything is configured, launch Rocket League and OMNX in no particular or
 
 - Check that DefaultStatsAPI.ini contains the required settings.
 
-- Restart Rocket League after changing the configuration file.
+- Restart Rocket League after changing the configuration file
+  
+- Restart Rocket League after updating OMNX settings
 
 - Make sure you are playing **Ranked** 1v1, 2v2, or 3v3.
 

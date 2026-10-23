@@ -148,22 +148,22 @@ Complete Steps 1 and 2 before launching Rocket League. Make sure you've saved bo
 <br>
 
 # Screenshots
-<table align="center" >
+<table align="center" border="0" >
   <tr>
     <td align="center" valign="top">
       <h3>Session</h3>
       <img src="screenshots/session.jpg" alt="OMNX Session" width="300">
       <h3>Settings</h3>
-      <img src="screenshots/settings.jpg" alt="OMNX Settings" width="300">
+      <img src="screenshots/settings_v1.1.0.jpg" alt="OMNX Settings" width="300">
     </td>
-  <td width="100"></td>
+  <td width="200"></td>
     <td align="center" valign="top">
       <h3>Match History</h3>
-      <img src="screenshots/match_history.jpg" alt="OMNX Match History" width="172">
+      <!-- <img src="screenshots/match_history.jpg" alt="OMNX Match History" width="172"> -->
+      <img src="screenshots/match_history.jpg" alt="OMNX Match History" width="300">
     </td>
   </tr>
 </table>
-
 
 <img src="screenshots/all_windows_in_game_anon.jpg" alt="OMNX in game preview" width="full">
 
